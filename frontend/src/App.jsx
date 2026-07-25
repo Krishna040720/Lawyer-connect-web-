@@ -9,6 +9,7 @@ import LawyerList from './pages/LawyerList';
 import LawyerProfile from './pages/LawyerProfile';
 import Chat from './pages/Chat';
 import Dashboard from './pages/Dashboard';
+import Admin from './pages/Admin';
 
 export default function App() {
   return (
@@ -33,6 +34,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <Admin />
             </ProtectedRoute>
           }
         />

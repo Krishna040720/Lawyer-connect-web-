@@ -40,6 +40,11 @@ export default function Navbar() {
               <Link to="/dashboard" style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate)' }}>
                 Dashboard
               </Link>
+              {user.role === 'admin' && (
+                <Link to="/admin" style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate)' }}>
+                  Admin
+                </Link>
+              )}
               <span className="docket-tag">{user.role}</span>
               <button onClick={handleLogout} className="btn-outline" style={{ padding: '8px 16px', fontSize: 13 }}>
                 Log out

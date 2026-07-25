@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { INDIAN_STATES } from '../constants';
 
 const SPECIALIZATIONS = ['Criminal', 'Corporate', 'Family', 'Property', 'Civil', 'Tax', 'Labour & Employment'];
 
@@ -8,7 +9,7 @@ export default function Register() {
   const [role, setRole] = useState('client');
   const [form, setForm] = useState({
     name: '', email: '', password: '', mobile: '',
-    specialization: '', experienceYears: '', barRegistrationNo: '', city: '', fee: '', bio: '',
+    specialization: '', experienceYears: '', barRegistrationNo: '', city: '', state: '', fee: '', bio: '',
   });
   const [error, setError] = useState('');
   const { register } = useAuth();
@@ -65,6 +66,10 @@ export default function Register() {
             <input type="number" min="0" placeholder="Years of experience" value={form.experienceYears} onChange={(e) => update('experienceYears', e.target.value)} required />
             <input placeholder="Bar registration number" value={form.barRegistrationNo} onChange={(e) => update('barRegistrationNo', e.target.value)} required />
             <input placeholder="City" value={form.city} onChange={(e) => update('city', e.target.value)} required />
+            <select value={form.state} onChange={(e) => update('state', e.target.value)} required>
+              <option value="">Select state</option>
+              {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
             <input type="number" min="0" placeholder="Consultation fee (₹)" value={form.fee} onChange={(e) => update('fee', e.target.value)} />
             <textarea placeholder="Short bio" rows={3} value={form.bio} onChange={(e) => update('bio', e.target.value)} />
           </>

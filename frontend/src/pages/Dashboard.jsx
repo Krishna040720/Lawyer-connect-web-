@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import { INDIAN_STATES } from '../constants';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function Dashboard() {
         specialization: user.specialization || '',
         experienceYears: user.experienceYears || 0,
         city: user.city || '',
+        state: user.state || '',
         fee: user.fee || '',
         bio: user.bio || '',
         mobile: user.mobile || '',
@@ -54,6 +56,10 @@ export default function Dashboard() {
             <input placeholder="Specialization" value={profile.specialization} onChange={(e) => setProfile((p) => ({ ...p, specialization: e.target.value }))} />
             <input type="number" placeholder="Years of experience" value={profile.experienceYears} onChange={(e) => setProfile((p) => ({ ...p, experienceYears: e.target.value }))} />
             <input placeholder="City" value={profile.city} onChange={(e) => setProfile((p) => ({ ...p, city: e.target.value }))} />
+            <select value={profile.state} onChange={(e) => setProfile((p) => ({ ...p, state: e.target.value }))}>
+              <option value="">Select state</option>
+              {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
             <input type="number" placeholder="Consultation fee (₹)" value={profile.fee} onChange={(e) => setProfile((p) => ({ ...p, fee: e.target.value }))} />
             <input placeholder="Mobile number" value={profile.mobile} onChange={(e) => setProfile((p) => ({ ...p, mobile: e.target.value }))} />
             <textarea placeholder="Bio" rows={3} value={profile.bio} onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))} />
