@@ -4,15 +4,16 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/lawyers?specialization=Criminal&city=Delhi&minExperience=5&search=text
-// Public listing + search/filter, used by the "browse lawyers" page
+// GET /api/lawyers?specialization=Criminal&city=Delhi&state=Maharashtra&minExperience=5&search=text
+// Public listing + search/filter, used by the "browse lawyers" feed
 router.get('/', async (req, res) => {
   try {
-    const { specialization, city, minExperience, search } = req.query;
+    const { specialization, city, state, minExperience, search } = req.query;
     const query = { role: 'lawyer' };
 
     if (specialization) query.specialization = specialization;
     if (city) query.city = new RegExp(city, 'i');
+    if (state) query.state = state;
     if (minExperience) query.experienceYears = { $gte: Number(minExperience) };
     if (search) {
       query.$or = [
@@ -29,6 +30,31 @@ router.get('/', async (req, res) => {
     res.json(lawyers);
   } catch (err) {
     res.status(500).json({ message: 'Could not fetch lawyers', error: err.message });
+  }
+});
+
+// GET /api/lawyers/meta/states - distinct list of states that have at least one lawyer,
+// used to populate the state browser on the feed page
+router.get('/meta/states', async (req, res) => {
+  try {
+    const states = await User.distinct('state', { role: 'lawyer', state: { $ne: '' } });
+    res.json(states.sort());
+  } catch (err) {
+    res.status(500).json({ message: 'Could not fetch states', error: err.message });
+  }
+});
+
+// GET /api/lawyers/meta/stats - simple counts used on the landing page
+router.get('/meta/stats', async (req, res) => {
+  try {
+    const [lawyerCount, verifiedCount, states] = await Promise.all([
+      User.countDocuments({ role: 'lawyer' }),
+      User.countDocuments({ role: 'lawyer', verified: true }),
+      User.distinct('state', { role: 'lawyer', state: { $ne: '' } }),
+    ]);
+    res.json({ lawyerCount, verifiedCount, stateCount: states.length });
+  } catch (err) {
+    res.status(500).json({ message: 'Could not fetch stats', error: err.message });
   }
 });
 
@@ -51,7 +77,7 @@ router.put('/me/update', protect, async (req, res) => {
     }
     const allowedFields = [
       'name', 'mobile', 'specialization', 'experienceYears',
-      'barRegistrationNo', 'city', 'fee', 'bio',
+      'barRegistrationNo', 'city', 'state', 'fee', 'bio',
     ];
     const updates = {};
     allowedFields.forEach((field) => {

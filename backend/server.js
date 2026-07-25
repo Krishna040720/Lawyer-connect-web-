@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const lawyerRoutes = require('./routes/lawyerRoutes');
 const ratingRoutes = require('./routes/ratingRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 connectDB();
 
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/lawyers', lawyerRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

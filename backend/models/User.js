@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['client', 'lawyer'], required: true },
+    role: { type: String, enum: ['client', 'lawyer', 'admin'], required: true },
     mobile: { type: String, required: true },
 
     // Lawyer-specific fields (ignored for clients)
@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
     experienceYears: { type: Number, default: 0 },
     barRegistrationNo: { type: String, default: '' },
     city: { type: String, default: '' },
+    state: { type: String, default: '' }, // Indian state, for browsing lawyers state-wise
     fee: { type: Number, default: 0 }, // consultation fee
     bio: { type: String, default: '' },
     verified: { type: Boolean, default: false },

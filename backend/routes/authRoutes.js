@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
   try {
     const {
       name, email, password, role, mobile,
-      specialization, experienceYears, barRegistrationNo, city, fee, bio,
+      specialization, experienceYears, barRegistrationNo, city, state, fee, bio,
     } = req.body;
 
     if (!name || !email || !password || !role || !mobile) {
@@ -46,6 +46,7 @@ router.post('/register', async (req, res) => {
       experienceYears: role === 'lawyer' ? experienceYears : undefined,
       barRegistrationNo: role === 'lawyer' ? barRegistrationNo : undefined,
       city: role === 'lawyer' ? city : undefined,
+      state: role === 'lawyer' ? state : undefined,
       fee: role === 'lawyer' ? fee : undefined,
       bio: role === 'lawyer' ? bio : undefined,
     });

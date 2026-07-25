@@ -5,6 +5,21 @@ const { protect, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+// GET /api/ratings/featured/top - a few of the best written reviews across all lawyers,
+// used as testimonials on the landing page. Must be defined before /:lawyerId.
+router.get('/featured/top', async (req, res) => {
+  try {
+    const ratings = await Rating.find({ stars: { $gte: 4 }, review: { $ne: '' } })
+      .populate('client', 'name')
+      .populate('lawyer', 'name specialization')
+      .sort({ stars: -1, createdAt: -1 })
+      .limit(3);
+    res.json(ratings);
+  } catch (err) {
+    res.status(500).json({ message: 'Could not fetch featured reviews', error: err.message });
+  }
+});
+
 // GET /api/ratings/:lawyerId - all reviews for a lawyer (public)
 router.get('/:lawyerId', async (req, res) => {
   try {
