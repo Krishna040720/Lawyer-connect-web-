@@ -7,6 +7,7 @@ import { INDIAN_STATES } from '../constants';
 export default function Dashboard() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
+  const [search, setSearch] = useState('');
   const [profile, setProfile] = useState(null);
   const [saved, setSaved] = useState(false);
 
@@ -21,6 +22,7 @@ export default function Dashboard() {
         fee: user.fee || '',
         bio: user.bio || '',
         mobile: user.mobile || '',
+        available: user.available !== false,
       });
     }
   }, [user]);
@@ -40,6 +42,15 @@ export default function Dashboard() {
   function otherPartyName(convo) {
     const senderId = convo.sender?._id || convo.sender;
     return String(senderId) === String(user._id) ? convo.receiver?.name : convo.sender?.name;
+  }
+
+  const filteredConversations = conversations.filter((c) => {
+    const name = (otherPartyName(c) || '').toLowerCase();
+    return name.includes(search.toLowerCase());
+  });
+
+  async function openConversation(convoId) {
+    setConversations((prev) => prev.map((c) => (c._id === convoId ? { ...c, unreadCount: 0 } : c)));
   }
 
   return (
@@ -63,6 +74,14 @@ export default function Dashboard() {
             <input type="number" placeholder="Consultation fee (₹)" value={profile.fee} onChange={(e) => setProfile((p) => ({ ...p, fee: e.target.value }))} />
             <input placeholder="Mobile number" value={profile.mobile} onChange={(e) => setProfile((p) => ({ ...p, mobile: e.target.value }))} />
             <textarea placeholder="Bio" rows={3} value={profile.bio} onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink)' }}>
+              <input
+                type="checkbox"
+                checked={profile.available}
+                onChange={(e) => setProfile((p) => ({ ...p, available: e.target.checked }))}
+              />
+              Available for new clients right now
+            </label>
             <button type="submit" className="btn-gold" style={{ padding: '11px 0', width: 160 }}>
               {saved ? 'Saved ✓' : 'Save changes'}
             </button>
@@ -71,17 +90,43 @@ export default function Dashboard() {
       )}
 
       <div className="card" style={{ padding: 24 }}>
-        <h3 style={{ fontSize: 18, marginBottom: 14 }}>Your Conversations</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, gap: 12, flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: 18, margin: 0 }}>Your Conversations</h3>
+          {conversations.length > 0 && (
+            <input
+              placeholder="Search conversations…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ maxWidth: 220 }}
+            />
+          )}
+        </div>
         {conversations.length === 0 && <p style={{ color: 'var(--slate)' }}>No conversations yet.</p>}
+        {conversations.length > 0 && filteredConversations.length === 0 && (
+          <p style={{ color: 'var(--slate)' }}>No conversations match "{search}".</p>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {conversations.map((c) => (
+          {filteredConversations.map((c) => (
             <Link
               key={c._id}
               to={`/chat/${otherPartyId(c)}`}
+              onClick={() => openConversation(c._id)}
               className="card"
-              style={{ padding: 14, display: 'flex', justifyContent: 'space-between' }}
+              style={{ padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}
             >
-              <span style={{ fontWeight: 600 }}>{otherPartyName(c) || 'User'}</span>
+              <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {otherPartyName(c) || 'User'}
+                {c.unreadCount > 0 && (
+                  <span
+                    style={{
+                      background: 'var(--gold)', color: 'var(--navy)', borderRadius: 999,
+                      fontSize: 11.5, fontWeight: 700, padding: '2px 8px', lineHeight: 1.4,
+                    }}
+                  >
+                    {c.unreadCount} new
+                  </span>
+                )}
+              </span>
               <span style={{ color: 'var(--slate)', fontSize: 13.5 }}>{c.text.slice(0, 40)}</span>
             </Link>
           ))}
