@@ -29,6 +29,9 @@ export default function Login() {
         {error && <div style={{ color: 'var(--danger)', fontSize: 13.5 }}>{error}</div>}
         <button type="submit" className="btn-primary" style={{ padding: '13px 0' }}>Log in</button>
       </form>
+      <p style={{ fontSize: 13.5, marginTop: 12 }}>
+        <Link to="/forgot-password" style={{ color: 'var(--slate)' }}>Forgot your password?</Link>
+      </p>
       <p style={{ fontSize: 14, color: 'var(--slate)', marginTop: 18 }}>
         No account? <Link to="/register" style={{ color: 'var(--navy)', fontWeight: 600 }}>Sign up</Link>
       </p>
