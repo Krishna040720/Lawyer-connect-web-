@@ -1,9 +1,27 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../api';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+    function fetchUnread() {
+      api.get('/messages/meta/unread-total').then(({ data }) => setUnreadCount(data.count)).catch(() => {});
+    }
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 20000); // poll every 20s
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, location.pathname]);
 
   function handleLogout() {
     logout();
@@ -37,8 +55,18 @@ export default function Navbar() {
 
           {user && (
             <>
-              <Link to="/dashboard" style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate)' }}>
+              <Link to="/dashboard" style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 Dashboard
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      background: '#c0392b', color: '#fff', borderRadius: 999,
+                      fontSize: 11, fontWeight: 700, padding: '1px 7px', lineHeight: 1.5,
+                    }}
+                  >
+                    {unreadCount}
+                  </span>
+                )}
               </Link>
               {user.role === 'admin' && (
                 <Link to="/admin" style={{ fontSize: 14, fontWeight: 500, color: 'var(--slate)' }}>
