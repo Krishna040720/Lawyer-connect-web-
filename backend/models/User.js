@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema(
     // Aggregated rating fields, updated whenever a new rating is added
     avgRating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
+
+    // Password reset flow
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null },
   },
   { timestamps: true }
 );
