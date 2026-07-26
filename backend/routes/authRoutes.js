@@ -1,85 +1,73 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { welcomeEmail, loginAlertEmail } = require('../utils/email');
+// Sends transactional emails via EmailJS (https://emailjs.com), using their
+// REST API from the backend (not the browser SDK - keeps keys out of the
+// frontend). Requires EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,
+// EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY in env vars.
+//
+// Emails are sent "fire and forget" from the routes that call this -
+// a failed email should never block or fail a signup/login request.
 
-const router = express.Router();
+async function sendEmail({ toEmail, name, subject, message }) {
+  const serviceId = process.env.EMAILJS_SERVICE_ID;
+  const templateId = process.env.EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.EMAILJS_PUBLIC_KEY;
+  const privateKey = process.env.EMAILJS_PRIVATE_KEY;
 
-function signToken(user) {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-    expiresIn: '7d',
+  if (!serviceId || !templateId || !publicKey || !privateKey) {
+    console.log('[email] EmailJS env vars not fully set, skipping email:', subject);
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: serviceId,
+        template_id: templateId,
+        user_id: publicKey,
+        accessToken: privateKey,
+        template_params: {
+          to_email: toEmail,
+          name,
+          email: toEmail,
+          subject,
+          message,
+          time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error('[email] EmailJS error:', res.status, body);
+    } else {
+      console.log('[email] Sent:', subject, '->', toEmail);
+    }
+  } catch (err) {
+    console.error('[email] Failed to send:', err.message);
+  }
+}
+
+function welcomeEmail(user) {
+  const roleLine = user.role === 'lawyer'
+    ? 'Your lawyer profile is now live. Add your specialization, experience, and bio from your dashboard so clients can find you.'
+    : 'You can now browse verified lawyers by specialization, state, and experience, and message them directly.';
+
+  return sendEmail({
+    toEmail: user.email,
+    name: user.name,
+    subject: 'Welcome to LawyerConnect',
+    message: `Your ${user.role} account on LawyerConnect has been created successfully. ${roleLine}`,
   });
 }
 
-function toSafeUser(user) {
-  const obj = user.toObject();
-  delete obj.password;
-  return obj;
+function loginAlertEmail(user) {
+  return sendEmail({
+    toEmail: user.email,
+    name: user.name,
+    subject: 'New login to your LawyerConnect account',
+    message: 'Your LawyerConnect account was just logged into. If this was you, no action is needed. If you don\'t recognize this login, consider updating your password.',
+  });
 }
 
-// POST /api/auth/register
-router.post('/register', async (req, res) => {
-  try {
-    const {
-      name, email, password, role, mobile,
-      specialization, experienceYears, barRegistrationNo, city, state, fee, bio,
-    } = req.body;
-
-    if (!name || !email || !password || !role || !mobile) {
-      return res.status(400).json({ message: 'Please fill all required fields' });
-    }
-
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      return res.status(400).json({ message: 'An account with this email already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      role,
-      mobile,
-      specialization: role === 'lawyer' ? specialization : undefined,
-      experienceYears: role === 'lawyer' ? experienceYears : undefined,
-      barRegistrationNo: role === 'lawyer' ? barRegistrationNo : undefined,
-      city: role === 'lawyer' ? city : undefined,
-      state: role === 'lawyer' ? state : undefined,
-      fee: role === 'lawyer' ? fee : undefined,
-      bio: role === 'lawyer' ? bio : undefined,
-    });
-
-    const token = signToken(user);
-    res.status(201).json({ token, user: toSafeUser(user) });
-
-    // Fire-and-forget: don't let a slow/failed email delay or break the response
-    welcomeEmail(user).catch(() => {});
-  } catch (err) {
-    res.status(500).json({ message: 'Registration failed', error: err.message });
-  }
-});
-
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email: (email || '').toLowerCase() });
-    if (!user) return res.status(400).json({ message: 'Invalid email or password' });
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: 'Invalid email or password' });
-
-    const token = signToken(user);
-    res.json({ token, user: toSafeUser(user) });
-
-    // Fire-and-forget: don't let a slow/failed email delay or break the response
-    loginAlertEmail(user).catch(() => {});
-  } catch (err) {
-    res.status(500).json({ message: 'Login failed', error: err.message });
-  }
-});
-
-module.exports = router;
+module.exports = { sendEmail, welcomeEmail, loginAlertEmail };
