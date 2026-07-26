@@ -5,6 +5,8 @@ export default function Admin() {
   const [status, setStatus] = useState('pending');
   const [lawyers, setLawyers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState('');
 
   async function load() {
     setLoading(true);
@@ -21,12 +23,40 @@ export default function Admin() {
     load();
   }
 
+  async function seedDemoLawyers() {
+    setSeeding(true);
+    setSeedResult('');
+    try {
+      const { data } = await api.post('/admin/seed-demo-lawyers');
+      setSeedResult(data.message);
+      load();
+    } catch (err) {
+      setSeedResult(err.response?.data?.message || 'Seeding failed.');
+    }
+    setSeeding(false);
+  }
+
   return (
     <div className="container" style={{ padding: '48px 24px 80px', maxWidth: 820 }}>
       <h2 style={{ fontSize: 28, marginBottom: 6 }}>Lawyer Verification</h2>
       <p style={{ color: 'var(--slate)', fontSize: 14.5, marginBottom: 22 }}>
         Review bar registration details and approve genuine lawyer profiles.
       </p>
+
+      <div className="card" style={{ padding: 18, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 14.5 }}>Demo data</div>
+          <div style={{ fontSize: 13, color: 'var(--slate)' }}>
+            Adds 8 fictional, verified lawyer profiles across different states so the feed isn't empty. Safe to click more than once.
+          </div>
+        </div>
+        <button onClick={seedDemoLawyers} className="btn-outline" style={{ padding: '9px 18px', fontSize: 13.5, whiteSpace: 'nowrap' }} disabled={seeding}>
+          {seeding ? 'Adding…' : 'Add demo lawyers'}
+        </button>
+      </div>
+      {seedResult && (
+        <p style={{ fontSize: 13.5, color: 'var(--slate)', marginTop: -14, marginBottom: 20 }}>{seedResult}</p>
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
         {['pending', 'verified', 'all'].map((s) => (
