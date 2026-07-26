@@ -8,21 +8,19 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['client', 'lawyer', 'admin'], required: true },
     mobile: { type: String, required: true },
 
-    // Lawyer-specific fields (ignored for clients)
-    specialization: { type: String, default: '' }, // e.g. Criminal, Corporate, Family, Property
+    specialization: { type: String, default: '' },
     experienceYears: { type: Number, default: 0 },
     barRegistrationNo: { type: String, default: '' },
     city: { type: String, default: '' },
-    state: { type: String, default: '' }, // Indian state, for browsing lawyers state-wise
-    fee: { type: Number, default: 0 }, // consultation fee
+    state: { type: String, default: '' },
+    fee: { type: Number, default: 0 },
     bio: { type: String, default: '' },
     verified: { type: Boolean, default: false },
+    available: { type: Boolean, default: true },
 
-    // Aggregated rating fields, updated whenever a new rating is added
     avgRating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
 
-    // Password reset flow
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
   },
