@@ -4,8 +4,6 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /api/lawyers?specialization=Criminal&city=Delhi&state=Maharashtra&minExperience=5&search=text
-// Public listing + search/filter, used by the "browse lawyers" feed
 router.get('/', async (req, res) => {
   try {
     const { specialization, city, state, minExperience, search } = req.query;
@@ -33,8 +31,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/lawyers/meta/states - distinct list of states that have at least one lawyer,
-// used to populate the state browser on the feed page
 router.get('/meta/states', async (req, res) => {
   try {
     const states = await User.distinct('state', { role: 'lawyer', state: { $ne: '' } });
@@ -44,7 +40,6 @@ router.get('/meta/states', async (req, res) => {
   }
 });
 
-// GET /api/lawyers/meta/stats - simple counts used on the landing page
 router.get('/meta/stats', async (req, res) => {
   try {
     const [lawyerCount, verifiedCount, states] = await Promise.all([
@@ -58,7 +53,6 @@ router.get('/meta/stats', async (req, res) => {
   }
 });
 
-// GET /api/lawyers/:id - single lawyer profile
 router.get('/:id', async (req, res) => {
   try {
     const lawyer = await User.findOne({ _id: req.params.id, role: 'lawyer' }).select('-password');
@@ -69,7 +63,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// PUT /api/lawyers/me - lawyer edits their own profile
 router.put('/me/update', protect, async (req, res) => {
   try {
     if (req.user.role !== 'lawyer') {
@@ -77,7 +70,7 @@ router.put('/me/update', protect, async (req, res) => {
     }
     const allowedFields = [
       'name', 'mobile', 'specialization', 'experienceYears',
-      'barRegistrationNo', 'city', 'state', 'fee', 'bio',
+      'barRegistrationNo', 'city', 'state', 'fee', 'bio', 'available',
     ];
     const updates = {};
     allowedFields.forEach((field) => {
