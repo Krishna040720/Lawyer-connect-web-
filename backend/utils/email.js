@@ -1,3 +1,11 @@
+// Sends transactional emails via EmailJS (https://emailjs.com), using their
+// REST API from the backend (not the browser SDK - keeps keys out of the
+// frontend). Requires EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID,
+// EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY in env vars.
+//
+// Emails are sent "fire and forget" from the routes that call this -
+// a failed email should never block or fail a signup/login request.
+
 async function sendEmail({ toEmail, name, subject, message }) {
   const serviceId = process.env.EMAILJS_SERVICE_ID;
   const templateId = process.env.EMAILJS_TEMPLATE_ID;
@@ -62,4 +70,13 @@ function loginAlertEmail(user) {
   });
 }
 
-module.exports = { sendEmail, welcomeEmail, loginAlertEmail };
+function resetPasswordEmail(user, resetUrl) {
+  return sendEmail({
+    toEmail: user.email,
+    name: user.name,
+    subject: 'Reset your LawyerConnect password',
+    message: `We received a request to reset your password. Use this link to set a new one (valid for 1 hour): ${resetUrl}. If you didn't request this, you can safely ignore this email.`,
+  });
+}
+
+module.exports = { sendEmail, welcomeEmail, loginAlertEmail, resetPasswordEmail };
