@@ -18,7 +18,6 @@ function toSafeUser(user) {
   return obj;
 }
 
-// POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const {
@@ -55,14 +54,12 @@ router.post('/register', async (req, res) => {
     const token = signToken(user);
     res.status(201).json({ token, user: toSafeUser(user) });
 
-    // Fire-and-forget: don't let a slow/failed email delay or break the response
     welcomeEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
 
-// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -75,7 +72,6 @@ router.post('/login', async (req, res) => {
     const token = signToken(user);
     res.json({ token, user: toSafeUser(user) });
 
-    // Fire-and-forget: don't let a slow/failed email delay or break the response
     loginAlertEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Login failed', error: err.message });
