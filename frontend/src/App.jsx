@@ -10,6 +10,8 @@ import LawyerProfile from './pages/LawyerProfile';
 import Chat from './pages/Chat';
 import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/lawyers" element={<LawyerList />} />
         <Route path="/lawyers/:id" element={<LawyerProfile />} />
