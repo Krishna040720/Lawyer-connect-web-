@@ -18,15 +18,12 @@ connectDB();
 
 const app = express();
 
-// Support one or more comma-separated origins in CLIENT_URL,
-// e.g. CLIENT_URL=https://lawyer-connect-web.vercel.app,http://localhost:5173
 const allowedOrigins = (process.env.CLIENT_URL || '*')
   .split(',')
   .map((o) => o.trim());
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (like curl, mobile apps, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -56,10 +53,8 @@ function conversationId(a, b) {
   return [a, b].sort().join('_');
 }
 
-// Map of userId -> socket.id, so we know where to deliver a message
 const onlineUsers = new Map();
 
-// Socket auth: client connects with { auth: { token } }
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
@@ -76,10 +71,26 @@ io.on('connection', (socket) => {
   onlineUsers.set(socket.userId, socket.id);
   console.log(`User connected: ${socket.userId}`);
 
-  // Join a room per conversation so messages route only to the two participants
   socket.on('join_conversation', (otherUserId) => {
     const room = conversationId(socket.userId, otherUserId);
     socket.join(room);
+  });
+
+  socket.on('mark_read', async ({ otherUserId }) => {
+    try {
+      const convoId = conversationId(socket.userId, otherUserId);
+      await Message.updateMany(
+        { conversationId: convoId, receiver: socket.userId, read: false },
+        { read: true }
+      );
+
+      const otherSocketId = onlineUsers.get(otherUserId);
+      if (otherSocketId) {
+        io.to(otherSocketId).emit('messages_seen', { byUserId: socket.userId });
+      }
+    } catch (err) {
+      console.error('mark_read error:', err.message);
+    }
   });
 
   socket.on('send_message', async ({ receiverId, text }) => {
@@ -95,7 +106,6 @@ io.on('connection', (socket) => {
 
     io.to(convoId).emit('receive_message', message);
 
-    // Also notify the receiver directly in case they haven't joined the room yet
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('new_message_notification', message);
