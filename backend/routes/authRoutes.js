@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { welcomeEmail, loginAlertEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -53,6 +54,9 @@ router.post('/register', async (req, res) => {
 
     const token = signToken(user);
     res.status(201).json({ token, user: toSafeUser(user) });
+
+    // Fire-and-forget: don't let a slow/failed email delay or break the response
+    welcomeEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
@@ -70,6 +74,9 @@ router.post('/login', async (req, res) => {
 
     const token = signToken(user);
     res.json({ token, user: toSafeUser(user) });
+
+    // Fire-and-forget: don't let a slow/failed email delay or break the response
+    loginAlertEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
