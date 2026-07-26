@@ -10,13 +10,13 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [otherUser, setOtherUser] = useState(null);
+  const [seenByOther, setSeenByOther] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
     let socket;
 
     async function init() {
-      // Load past messages + who we're chatting with
       const [{ data: history }, { data: profile }] = await Promise.all([
         api.get(`/messages/${otherUserId}`),
         api.get(`/lawyers/${otherUserId}`).catch(() => ({ data: null })),
@@ -27,8 +27,15 @@ export default function Chat() {
       socket = getSocket();
       if (socket) {
         socket.emit('join_conversation', otherUserId);
+        socket.emit('mark_read', { otherUserId });
+
         socket.on('receive_message', (msg) => {
           setMessages((prev) => [...prev, msg]);
+          socket.emit('mark_read', { otherUserId });
+        });
+
+        socket.on('messages_seen', ({ byUserId }) => {
+          if (byUserId === otherUserId) setSeenByOther(true);
         });
       }
     }
@@ -36,7 +43,10 @@ export default function Chat() {
     init();
 
     return () => {
-      if (socket) socket.off('receive_message');
+      if (socket) {
+        socket.off('receive_message');
+        socket.off('messages_seen');
+      }
     };
   }, [otherUserId]);
 
@@ -50,7 +60,10 @@ export default function Chat() {
     const socket = getSocket();
     socket.emit('send_message', { receiverId: otherUserId, text });
     setText('');
+    setSeenByOther(false);
   }
+
+  const lastMineIndex = [...messages].map((m) => String(m.sender?._id || m.sender) === String(user._id)).lastIndexOf(true);
 
   return (
     <div className="container" style={{ padding: '40px 24px 60px', maxWidth: 700 }}>
@@ -65,22 +78,25 @@ export default function Chat() {
         {messages.length === 0 && (
           <p style={{ color: 'var(--slate)', fontSize: 14, margin: 'auto' }}>Say hello to start the conversation.</p>
         )}
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const mine = String(m.sender?._id || m.sender) === String(user._id);
           return (
-            <div
-              key={m._id}
-              style={{
-                alignSelf: mine ? 'flex-end' : 'flex-start',
-                background: mine ? 'var(--navy)' : 'var(--cream)',
-                color: mine ? 'var(--cream)' : 'var(--ink)',
-                padding: '9px 14px',
-                borderRadius: 12,
-                maxWidth: '75%',
-                fontSize: 14.5,
-              }}
-            >
-              {m.text}
+            <div key={m._id} style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
+              <div
+                style={{
+                  background: mine ? 'var(--navy)' : 'var(--cream)',
+                  color: mine ? 'var(--cream)' : 'var(--ink)',
+                  padding: '9px 14px',
+                  borderRadius: 12,
+                  maxWidth: '75%',
+                  fontSize: 14.5,
+                }}
+              >
+                {m.text}
+              </div>
+              {mine && i === lastMineIndex && seenByOther && (
+                <span style={{ fontSize: 11, color: 'var(--slate)', marginTop: 3, marginRight: 2 }}>Seen</span>
+              )}
             </div>
           );
         })}
