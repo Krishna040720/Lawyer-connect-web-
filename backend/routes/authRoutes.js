@@ -1,8 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
-const { welcomeEmail, loginAlertEmail } = require('../utils/email');
+const { welcomeEmail, loginAlertEmail, resetPasswordEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -18,6 +19,7 @@ function toSafeUser(user) {
   return obj;
 }
 
+// POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const {
@@ -54,12 +56,14 @@ router.post('/register', async (req, res) => {
     const token = signToken(user);
     res.status(201).json({ token, user: toSafeUser(user) });
 
+    // Fire-and-forget: don't let a slow/failed email delay or break the response
     welcomeEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Registration failed', error: err.message });
   }
 });
 
+// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -72,10 +76,19 @@ router.post('/login', async (req, res) => {
     const token = signToken(user);
     res.json({ token, user: toSafeUser(user) });
 
+    // Fire-and-forget: don't let a slow/failed email delay or break the response
     loginAlertEmail(user).catch(() => {});
   } catch (err) {
     res.status(500).json({ message: 'Login failed', error: err.message });
   }
 });
 
-module.exports = router;
+// POST /api/auth/forgot-password - request a reset link.
+// Always responds with a generic success message (whether or not the email
+// exists) so this endpoint can't be used to check which emails are registered.
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email: (email || '').toLowerCase() });
+
+    if (user) {
