@@ -21,7 +21,6 @@ export default function LawyerFeedRow({ lawyer }) {
         alignItems: 'flex-start',
       }}
     >
-      {/* Avatar */}
       <div
         style={{
           width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
@@ -33,7 +32,6 @@ export default function LawyerFeedRow({ lawyer }) {
         {initials(lawyer.name)}
       </div>
 
-      {/* Main content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
           <div>
@@ -42,6 +40,15 @@ export default function LawyerFeedRow({ lawyer }) {
               {lawyer.verified && (
                 <span className="badge-verified" style={{ marginLeft: 8, fontSize: 12 }}>✓ Verified</span>
               )}
+              <span
+                style={{
+                  marginLeft: 8, fontSize: 11.5, fontWeight: 700, padding: '2px 8px', borderRadius: 999,
+                  background: lawyer.available !== false ? '#e3f5e9' : '#f2f2f2',
+                  color: lawyer.available !== false ? '#1e7a45' : 'var(--slate)',
+                }}
+              >
+                {lawyer.available !== false ? '● Available today' : 'Busy'}
+              </span>
             </h3>
             <div style={{ fontSize: 13.5, color: 'var(--slate)' }}>
               {lawyer.specialization || 'General Practice'} Lawyer
