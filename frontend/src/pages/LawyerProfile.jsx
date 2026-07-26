@@ -52,7 +52,18 @@ export default function LawyerProfile() {
               {lawyer.specialization} · {lawyer.city}
             </div>
           </div>
-          {lawyer.verified && <span className="badge-verified">✓ Verified</span>}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {lawyer.verified && <span className="badge-verified">✓ Verified</span>}
+            <span
+              style={{
+                fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
+                background: lawyer.available !== false ? '#e3f5e9' : '#f2f2f2',
+                color: lawyer.available !== false ? '#1e7a45' : 'var(--slate)',
+              }}
+            >
+              {lawyer.available !== false ? '● Available today' : 'Busy'}
+            </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
